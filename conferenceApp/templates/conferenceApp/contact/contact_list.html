@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+
+{% block title %}联系人管理 - GYSDH CHAT{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 页面标题 -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <i class="fas fa-address-card text-orange-600 dark:text-orange-400 text-4xl mr-4"></i>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400">联系人管理</h1>
+            </div>
+            <div class="flex space-x-4">
+                <!-- 添加批量导入用户按钮 -->
+                <button onclick="document.getElementById('importModal').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-file-import mr-2"></i>
+                    导入用户
+                </button>
+                <a href="{% url 'conference:create_contact' %}" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    新增联系人
+                </a>
+                <a href="{% url 'conference:dashboard' %}" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 transform hover:scale-105 transition-all duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    返回仪表盘
+                </a>
+            </div>
+        </div>
+
+        <!-- 隐藏的表单用于批量操作 -->
+        <form id="batch-delete-form" method="post" action="{% url 'conference:batch_delete_contacts' %}" class="hidden">
+            {% csrf_token %}
+            <input type="hidden" name="contact_ids[]" id="batch-delete-contact-ids">
+        </form>
+        <form id="batch-assign-form" method="post" action="{% url 'conference:batch_assign_tags' %}" class="hidden">
+            {% csrf_token %}
+            <input type="hidden" name="contact_ids[]" id="batch-assign-contact-ids">
+            <input type="hidden" name="tag_id" id="batch-assign-tag-id">
+        </form>
+
+        <!-- 搜索筛选表单 -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">联系人姓名</label>
+                        <input type="text" name="name" id="name" value="{{ filters.name }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700 dark:text-gray-300">公司名称</label>
+                        <input type="text" name="company" id="company" value="{{ filters.company }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="position" class="block text-sm font-medium text-gray-700 dark:text-gray-300">职位</label>
+                        <input type="text" name="position" id="position" value="{{ filters.position }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="is_primary" class="block text-sm font-medium text-gray-700 dark:text-gray-300">联系人类型</label>
+                        <select name="is_primary" id="is_primary"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                            <option value="">全部</option>
+                            <option value="true" {% if filters.is_primary == 'true' %}selected{% endif %}>主要联系人</option>
+                            <option value="false" {% if filters.is_primary == 'false' %}selected{% endif %}>普通联系人</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'conference:contact_list' %}" 
+                        class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+                        <i class="fas fa-undo mr-2"></i>
+                        重置
+                    </a>
+                    <button type="submit"
+                        class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200">
+                        <i class="fas fa-search mr-2"></i>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 联系人列表 -->
+        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all" class="rounded border-gray-300 dark:border-gray-600 text-orange-600 shadow-sm focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">联系人</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">所属公司</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">职位</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">联系方式</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">标签</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">类型</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for contact in contacts %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="contact_ids[]" value="{{ contact.id }}" class="contact-checkbox rounded border-gray-300 dark:border-gray-600 text-orange-600 shadow-sm focus:border-orange-500 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-lg">
+                                            {{ contact.user.name|first|upper }}
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ contact.user.name }}
+                                            {% if contact.is_primary %}
+                                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100">
+                                                主要联系人
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ contact.user.number }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ contact.company.name }}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ contact.company.code }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ contact.position }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ contact.phone }}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ contact.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if contact.is_primary %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
+                                    主要联系人
+                                </span>
+                                {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                    普通联系人
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-4">
+                                    <a href="{% url 'conference:contact_detail' contact.id %}" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-500">
+                                        <i class="fas fa-eye"></i> 查看
+                                    </a>
+                                    <a href="{% url 'conference:update_contact' contact.id %}" class="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-500">
+                                        <i class="fas fa-edit"></i> 编辑
+                                    </a>
+                                    <form method="post" action="{% url 'conference:delete_contact' contact.id %}" class="inline" onsubmit="return confirm('确定要删除此联系人吗？');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-500">
+                                            <i class="fas fa-trash-alt"></i> 删除
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                暂无联系人数据
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <div class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-600 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        上一页
+                    </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        下一页
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">
+                            显示第 <span class="font-medium">{{ page_obj.start_index }}</span> 到 <span class="font-medium">{{ page_obj.end_index }}</span> 条，
+                            共 <span class="font-medium">{{ paginator.count }}</span> 条记录
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <span class="sr-only">上一页</span>
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                            {% if page_obj.number == i %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-orange-50 dark:bg-orange-900 text-sm font-medium text-orange-600 dark:text-orange-200">
+                                {{ i }}
+                            </span>
+                            {% else %}
+                            <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                {{ i }}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <span class="sr-only">下一页</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 批量操作区域 -->
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">批量操作</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 批量删除按钮 -->
+                <div class="space-y-2">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">删除联系人</h4>
+                    <button onclick="handleBatchDelete()" type="button"
+                        class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transform hover:scale-105 transition-all duration-200">
+                        <i class="fas fa-trash-alt mr-2"></i>
+                        批量删除
+                    </button>
+                </div>
+        
+                <!-- 设置标签 -->
+                <div class="space-y-2">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">设置标签</h4>
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" type="button"
+                            class="w-full inline-flex justify-between items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transform hover:scale-105 transition-all duration-200">
+                            <span><i class="fas fa-tags mr-2"></i> 添加标签</span>
+                            <i class="fas fa-chevron-down ml-2"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false"
+                            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1">
+                                {% for tag in tags %}
+                                <button onclick="handleBatchAssignTags('add', '{{ tag.id }}', '{{ tag.name }}')"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                    {{ tag.name }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- 移除标签 -->
+                <div class="space-y-2">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">移除标签</h4>
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" type="button"
+                            class="w-full inline-flex justify-between items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 transform hover:scale-105 transition-all duration-200">
+                            <span><i class="fas fa-minus-circle mr-2"></i> 移除标签</span>
+                            <i class="fas fa-chevron-down ml-2"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false"
+                            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1">
+                                {% for tag in tags %}
+                                <button onclick="handleBatchAssignTags('remove', '{{ tag.id }}', '{{ tag.name }}')"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                    {{ tag.name }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 导入用户模态框 -->
+<div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <div class="flex justify-between items-center pb-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">导入用户</h3>
+                <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mt-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    选择要导入为联系人的用户：
+                </p>
+                <div class="max-h-96 overflow-y-auto">
+                    <form id="import-users-form" method="post" action="{% url 'conference:import_users' %}">
+                        {% csrf_token %}
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <input id="select-all-users" type="checkbox" class="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out">
+                                <label for="select-all-users" class="ml-2 text-sm text-gray-700 dark:text-gray-300">全选当前页</label>
+                            </div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                共 {{ available_users.paginator.count }} 个用户
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            {% for user in available_users %}
+                            <div class="flex items-center space-x-4 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <input type="checkbox" name="selected_users" value="{{ user.id }}" class="user-checkbox form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.number }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- 分页控件 -->
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                {% if available_users.has_previous %}
+                                <a href="?import_page={{ available_users.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    上一页
+                                </a>
+                                {% endif %}
+                                {% if available_users.has_next %}
+                                <a href="?import_page={{ available_users.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    下一页
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        显示第 <span class="font-medium">{{ available_users.start_index }}</span> 到 <span class="font-medium">{{ available_users.end_index }}</span> 条，
+                                        共 <span class="font-medium">{{ available_users.paginator.count }}</span> 条
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        {% if available_users.has_previous %}
+                                        <a href="?import_page={{ available_users.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">上一页</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% for i in available_users.paginator.page_range %}
+                                        {% if i == available_users.number %}
+                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                            {{ i }}
+                                        </span>
+                                        {% else %}
+                                        <a href="?import_page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ i }}
+                                        </a>
+                                        {% endif %}
+                                        {% endfor %}
+
+                                        {% if available_users.has_next %}
+                                        <a href="?import_page={{ available_users.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                            <span class="sr-only">下一页</span>
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                        {% endif %}
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end mt-6 space-x-4">
+            <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                class="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                取消
+            </button>
+            <button onclick="handleImportUsers()"
+                class="px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-md hover:from-orange-700 hover:to-red-700 focus:outline-none">
+                确认导入
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript 功能 -->
+{% block extra_js %}
+<script>
+    // 全选/取消全选功能
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.getElementsByClassName('contact-checkbox');
+        for (let checkbox of checkboxes) {
+            checkbox.checked = this.checked;
+        }
+    });
+
+    // 获取选中的联系人ID
+    function getSelectedContactIds() {
+        const checkboxes = document.getElementsByClassName('contact-checkbox');
+        const selectedIds = [];
+        for (let checkbox of checkboxes) {
+            if (checkbox.checked) {
+                selectedIds.push(checkbox.value);
+            }
+        }
+        return selectedIds;
+    }
+
+    // 批量删除功能
+    function handleBatchDelete() {
+        const selectedIds = getSelectedContactIds();
+        if (selectedIds.length === 0) {
+            alert('请先选择要删除的联系人');
+            return;
+        }
+        if (!confirm('确定要删除选中的联系人吗？此操作不可恢复。')) {
+            return;
+        }
+        document.getElementById('batch-delete-contact-ids').value = selectedIds.join(',');
+        document.getElementById('batch-delete-form').submit();
+    }
+
+    // 批量分配标签功能
+    function handleBatchAssignTags(action, tagId, tagName) {
+        const selectedIds = getSelectedContactIds();
+        if (selectedIds.length === 0) {
+            alert('请先选择要操作的联系人');
+            return;
+        }
+        if (!confirm(`确定要${action === 'add' ? '添加' : '移除'}标签"${tagName}"吗？`)) {
+            return;
+        }
+        document.getElementById('batch-assign-contact-ids').value = selectedIds.join(',');
+        document.getElementById('batch-assign-tag-id').value = tagId;
+        document.getElementById('batch-assign-form').action = `{% url 'conference:batch_assign_tags' %}?action=${action}`;
+        document.getElementById('batch-assign-form').submit();
+    }
+
+    // 导入用户功能
+    function handleImportUsers() {
+        const form = document.getElementById('import-users-form');
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            alert('请先选择要导入的用户');
+            return;
+        }
+        if (!confirm('确定要导入选中的用户作为联系人吗？')) {
+            return;
+        }
+        form.submit();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 全选功能
+        const selectAllCheckbox = document.getElementById('select-all-users');
+        const userCheckboxes = document.getElementsByClassName('user-checkbox');
+
+        selectAllCheckbox.addEventListener('change', function() {
+            Array.from(userCheckboxes).forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        // 当单个复选框状态改变时，检查是否需要更新全选复选框
+        Array.from(userCheckboxes).forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(userCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            });
+        });
+
+        // 分页链接处理
+        const paginationLinks = document.querySelectorAll('[href*="import_page"]');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = new URL(link.href).searchParams.get('import_page');
+                // 使用 AJAX 加载新页面的内容
+                fetch(`?import_page=${page}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('#import-users-form');
+                    document.querySelector('#import-users-form').innerHTML = newContent.innerHTML;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

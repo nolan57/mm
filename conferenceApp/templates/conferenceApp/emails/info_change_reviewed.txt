@@ -1,0 +1,19 @@
+尊敬的 {{ participant.name }}：
+
+您好！您的信息变更申请已经审核完成。以下是审核结果：
+
+变更字段：{{ change.get_field_name_display }}
+原值：{{ change.old_value }}
+新值：{{ change.new_value }}
+审核结果：{% if change.status == 'approved' %}已通过{% else %}已拒绝{% endif %}
+{% if change.review_comment %}
+审核意见：{{ change.review_comment }}
+{% endif %}
+
+{% if change.status == 'approved' %}
+您的信息已更新。如需查看最新信息，请登录系统查看。
+{% else %}
+如果您对审核结果有任何疑问，请联系系统管理员。
+{% endif %}
+
+此邮件由系统自动发送，请勿直接回复。

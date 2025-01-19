@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if contact %}编辑联系人{% else %}新增联系人{% endif %} - GYSDH CHAT{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-6">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 页面标题 -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <i class="fas fa-address-card text-orange-600 dark:text-orange-400 text-4xl mr-4"></i>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400">
+                    {% if contact %}编辑联系人{% else %}新增联系人{% endif %}
+                </h1>
+            </div>
+            <a href="{% url 'conference:contact_list' %}" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 transform hover:scale-105 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                返回列表
+            </a>
+        </div>
+
+        <!-- 表单卡片 -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <form method="post" class="space-y-6 p-6">
+                {% csrf_token %}
+                
+                {% if not contact %}
+                <!-- 选择用户（仅在新增时显示） -->
+                <div>
+                    <label for="user" class="block text-sm font-medium text-gray-700 dark:text-gray-300">选择用户</label>
+                    <select name="user" id="user" required
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+                        onchange="updateCompanyInfo(this)">
+                        <option value="">请选择用户</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" data-company="{{ user.company.name }}">{{ user.name }} ({{ user.number }})</option>
+                        {% endfor %}
+                    </select>
+                    <p id="company-info" class="mt-2 text-sm text-gray-500 dark:text-gray-400"></p>
+                </div>
+                {% endif %}
+
+                <!-- 联系人信息 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="position" class="block text-sm font-medium text-gray-700 dark:text-gray-300">职位</label>
+                        <input type="text" name="position" id="position" value="{{ contact.position|default:'' }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+                            placeholder="请输入职位">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">联系电话</label>
+                        <input type="tel" name="phone" id="phone" value="{{ contact.phone|default:'' }}" required
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+                            placeholder="请输入联系电话">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">电子邮箱</label>
+                    <input type="email" name="email" id="email" value="{{ contact.email|default:'' }}" required
+                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+                        placeholder="请输入电子邮箱">
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'conference:contact_list' %}"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        取消
+                    </a>
+                    <button type="submit"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateCompanyInfo(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        const companyInfo = document.getElementById('company-info');
+        if (selectedOption.value) {
+            const companyName = selectedOption.getAttribute('data-company');
+            companyInfo.textContent = `所属公司：${companyName}`;
+        } else {
+            companyInfo.textContent = '';
+        }
+    }
+</script>
+{% endblock %}

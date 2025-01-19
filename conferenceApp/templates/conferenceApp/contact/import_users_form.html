@@ -1,0 +1,77 @@
+{% csrf_token %}
+<div class="flex justify-between items-center mb-4">
+    <div class="flex items-center">
+        <input id="select-all-users" type="checkbox" class="form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out">
+        <label for="select-all-users" class="ml-2 text-sm text-gray-700 dark:text-gray-300">全选当前页</label>
+    </div>
+    <div class="text-sm text-gray-500 dark:text-gray-400">
+        共 {{ available_users.paginator.count }} 个用户
+    </div>
+</div>
+<div class="grid grid-cols-1 gap-4">
+    {% for user in available_users %}
+    <div class="flex items-center space-x-4 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+        <input type="checkbox" name="selected_users" value="{{ user.id }}" class="user-checkbox form-checkbox h-4 w-4 text-indigo-600 transition duration-150 ease-in-out">
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ user.name }}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.number }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<!-- 分页控件 -->
+<div class="mt-4 flex items-center justify-between">
+    <div class="flex-1 flex justify-between sm:hidden">
+        {% if available_users.has_previous %}
+        <a href="?import_page={{ available_users.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            上一页
+        </a>
+        {% endif %}
+        {% if available_users.has_next %}
+        <a href="?import_page={{ available_users.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            下一页
+        </a>
+        {% endif %}
+    </div>
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+                显示第 <span class="font-medium">{{ available_users.start_index }}</span> 到 <span class="font-medium">{{ available_users.end_index }}</span> 条，
+                共 <span class="font-medium">{{ available_users.paginator.count }}</span> 条
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% if available_users.has_previous %}
+                <a href="?import_page={{ available_users.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">上一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                {% endif %}
+                
+                {% for i in available_users.paginator.page_range %}
+                    {% if i == available_users.number %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600">
+                        {{ i }}
+                    </span>
+                    {% else %}
+                    <a href="?import_page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{ i }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if available_users.has_next %}
+                <a href="?import_page={{ available_users.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">下一页</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+</div>

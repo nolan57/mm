@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-6">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 页面标题 -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <i class="fas fa-user-circle text-blue-600 dark:text-blue-400 text-4xl mr-4"></i>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                    个人信息
+                </h1>
+            </div>
+            {% if not participant.info_verified %}
+            <button onclick="sendVerificationCode()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <i class="fas fa-check-circle mr-2"></i>
+                验证信息
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- 基本信息卡片 -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="px-6 py-4">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">基本信息</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">姓名</label>
+                            <div class="mt-1 flex items-center justify-between">
+                                <span class="text-gray-900 dark:text-white">{{ participant.name }}</span>
+                                <button onclick="showEditField('name')"
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">职位</label>
+                            <div class="mt-1 flex items-center justify-between">
+                                <span class="text-gray-900 dark:text-white">{{ participant.position }}</span>
+                                <button onclick="showEditField('position')"
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">联系电话</label>
+                            <div class="mt-1 flex items-center justify-between">
+                                <span class="text-gray-900 dark:text-white">{{ participant.phone }}</span>
+                                <button onclick="showEditField('phone')"
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">邮箱</label>
+                            <div class="mt-1 flex items-center justify-between">
+                                <span class="text-gray-900 dark:text-white">{{ participant.email }}</span>
+                                <button onclick="showEditField('email')"
+                                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400">所属公司</label>
+                        <div class="mt-1">
+                            <span class="text-gray-900 dark:text-white">{{ participant.company.name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信息验证状态 -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="px-6 py-4">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">验证状态</h2>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="px-2 py-1 text-sm rounded-full 
+                            {% if participant.info_verified %}
+                            bg-green-100 text-green-800
+                            {% else %}
+                            bg-yellow-100 text-yellow-800
+                            {% endif %}">
+                            {{ participant.info_verified|yesno:"已验证,未验证" }}
+                        </span>
+                    </div>
+                    {% if not participant.info_verified %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        请点击"验证信息"按钮，通过邮箱验证码验证您的身份
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 待审核的变更申请 -->
+        {% if pending_changes %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">待审核的变更申请</h2>
+                <div class="space-y-4">
+                    {% for change in pending_changes %}
+                    <div class="border-l-4 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ change.get_field_name_display }}：{{ change.old_value }} → {{ change.new_value }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    提交时间：{{ change.created_at|date:"Y-m-d H:i" }}
+                                </p>
+                            </div>
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                                待审核
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 编辑字段模态框 -->
+<div id="editFieldModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white" id="editFieldTitle"></h3>
+            <button onclick="closeEditField()"
+                    class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editFieldForm" onsubmit="submitFieldChange(event)">
+            {% csrf_token %}
+            <input type="hidden" id="fieldName" name="field_name">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新值</label>
+                <input type="text" id="newValue" name="new_value" required
+                       class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeEditField()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md">
+                    取消
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md">
+                    提交
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 验证码模态框 -->
+<div id="verificationModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">验证信息</h3>
+            <button onclick="closeVerificationModal()"
+                    class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="verificationForm" onsubmit="submitVerification(event)">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">验证码</label>
+                <input type="text" id="verificationCode" name="code" required
+                       class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                       placeholder="请输入邮箱收到的验证码">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeVerificationModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 rounded-md">
+                    取消
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md">
+                    验证
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fieldLabels = {
+    'name': '姓名',
+    'position': '职位',
+    'phone': '联系电话',
+    'email': '邮箱'
+};
+
+function showEditField(fieldName) {
+    document.getElementById('editFieldTitle').textContent = `修改${fieldLabels[fieldName]}`;
+    document.getElementById('fieldName').value = fieldName;
+    document.getElementById('newValue').value = '';
+    document.getElementById('editFieldModal').classList.remove('hidden');
+}
+
+function closeEditField() {
+    document.getElementById('editFieldModal').classList.add('hidden');
+}
+
+async function submitFieldChange(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('{% url "conference:request_info_change" %}', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert(data.message);
+            closeEditField();
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('提交变更申请时出错：' + error);
+    }
+}
+
+async function sendVerificationCode() {
+    try {
+        const response = await fetch('{% url "conference:send_verification_code" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert(data.message);
+            document.getElementById('verificationModal').classList.remove('hidden');
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('发送验证码时出错：' + error);
+    }
+}
+
+function closeVerificationModal() {
+    document.getElementById('verificationModal').classList.add('hidden');
+}
+
+async function submitVerification(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('{% url "conference:verify_participant" %}', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert(data.message);
+            closeVerificationModal();
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('验证时出错：' + error);
+    }
+}
+
+// 关闭模态框的其他方式
+document.querySelectorAll('.fixed').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

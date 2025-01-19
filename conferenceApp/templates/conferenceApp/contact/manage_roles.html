@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}管理会议角色 - GYSDH CHAT{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 页面标题 -->
+        <div class="flex justify-between items-center mb-8">
+            <div class="flex items-center">
+                <i class="fas fa-users-cog text-orange-600 dark:text-orange-400 text-4xl mr-4"></i>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400">
+                    管理会议角色
+                </h1>
+            </div>
+            <a href="{% url 'conference:contact_detail' contact.id %}" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 transform hover:scale-105 transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                返回详情
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 联系人信息卡片 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="h-12 w-12 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center">
+                                <span class="text-white font-bold text-xl">{{ contact.user.name|first|upper }}</span>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ contact.user.name }}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ contact.user.number }}</p>
+                            </div>
+                        </div>
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">所属公司</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ contact.company.name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">职位</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ contact.position }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 添加会议角色表单 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">添加会议角色</h3>
+                        <form method="post" class="space-y-6">
+                            {% csrf_token %}
+                            <div>
+                                <label for="conference" class="block text-sm font-medium text-gray-700 dark:text-gray-300">选择会议</label>
+                                <select name="conference" id="conference" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                                    <option value="">请选择会议</option>
+                                    {% for conf in conferences %}
+                                    <option value="{{ conf.id }}">{{ conf.name }} ({{ conf.start_date|date:"Y-m-d" }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">角色</label>
+                                <select name="role" id="role" required
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                                    <option value="">请选择角色</option>
+                                    <option value="organizer">主办方</option>
+                                    <option value="speaker">演讲者</option>
+                                    <option value="participant">参会者</option>
+                                    <option value="staff">工作人员</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">备注</label>
+                                <textarea name="notes" id="notes" rows="3"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm"
+                                    placeholder="请输入备注信息（选填）"></textarea>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" name="is_primary" id="is_primary"
+                                    class="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-gray-600 rounded">
+                                <label for="is_primary" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                    设为主要联系人
+                                </label>
+                            </div>
+
+                            <div class="flex justify-end space-x-3">
+                                <button type="submit"
+                                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                    添加角色
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 当前角色列表 -->
+                <div class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">当前会议角色</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-900">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">会议名称</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">角色</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">备注</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                {% for role in current_roles %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900 dark:text-white">{{ role.conference.name }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ role.conference.start_date|date:"Y-m-d" }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {% if role.is_primary %}
+                                            bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200
+                                            {% else %}
+                                            bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200
+                                            {% endif %}">
+                                            {{ role.get_role_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ role.notes|default:"-" }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <form method="post" action="{% url 'conference:delete_conference_role' role.id %}" class="inline" onsubmit="return confirm('确定要删除此角色吗？');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-500">
+                                                <i class="fas fa-trash-alt"></i> 删除
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                        暂无会议角色数据
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

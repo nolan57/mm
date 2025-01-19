@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="{% static 'vendor/jquery-ui/jquery-ui.min.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/formbuilder/form-builder.min.css' %}">
+<style>
+    .field-logic-container {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    .logic-rule {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .form-builder-field {
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-4">
+            <a href="{% url 'conference:manage_registration_forms' %}" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-arrow-left"></i> 返回表单列表
+            </a>
+        </div>
+        
+        <h2 class="text-center text-3xl font-bold mb-8 text-gray-800 dark:text-gray-200">编辑报名表单</h2>
+        
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+            <form id="registrationForm" method="post">
+                {% csrf_token %}
+                
+                <!-- 基本信息 -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4">基本信息</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">表单标题</label>
+                            <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" 
+                                   id="title" name="title" value="{{ registration_form.title }}" required>
+                        </div>
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">表单描述</label>
+                            <textarea class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" 
+                                      id="description" name="description" rows="3" required>{% if registration_form.description %}{{ registration_form.description }}{% endif %}</textarea>
+                        </div>
+                        <div>
+                            <label for="conference" class="block text-sm font-medium text-gray-700">关联会议（可选）</label>
+                            <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    id="conference" name="conference">
+                                <option value="">不关联会议</option>
+                                {% for conf in conferences %}
+                                <option value="{{ conf.id }}" 
+                                        data-start="{{ conf.registration_start|date:'Y-m-d H:i' }}" 
+                                        data-end="{{ conf.registration_end|date:'Y-m-d H:i' }}"
+                                        {% if registration_form.conference and registration_form.conference.id == conf.id %}selected{% endif %}>
+                                    {{ conf.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 表单设计 -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4">表单设计</h3>
+                    <div class="flex gap-6">
+                        <!-- 字段工具栏 -->
+                        <div class="w-64 bg-white rounded-lg shadow p-4">
+                            <h4 class="font-medium mb-3">添加字段</h4>
+                            <div class="space-y-2">
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="text">
+                                    <i class="fas fa-font mr-2"></i>
+                                    <span>单行文本</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="textarea">
+                                    <i class="fas fa-paragraph mr-2"></i>
+                                    <span>多行文本</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="number">
+                                    <i class="fas fa-hashtag mr-2"></i>
+                                    <span>数字</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="select">
+                                    <i class="fas fa-caret-square-down mr-2"></i>
+                                    <span>下拉选择</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="radio-group">
+                                    <i class="fas fa-dot-circle mr-2"></i>
+                                    <span>单选按钮组</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="checkbox-group">
+                                    <i class="fas fa-check-square mr-2"></i>
+                                    <span>复选框组</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="date">
+                                    <i class="fas fa-calendar-alt mr-2"></i>
+                                    <span>日期</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="time">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    <span>时间</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="datetime-local">
+                                    <i class="fas fa-calendar-plus mr-2"></i>
+                                    <span>日期时间</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="email">
+                                    <i class="fas fa-envelope mr-2"></i>
+                                    <span>电子邮箱</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="tel">
+                                    <i class="fas fa-phone mr-2"></i>
+                                    <span>电话号码</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="url">
+                                    <i class="fas fa-link mr-2"></i>
+                                    <span>网址链接</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="color">
+                                    <i class="fas fa-palette mr-2"></i>
+                                    <span>颜色选择</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="range">
+                                    <i class="fas fa-sliders-h mr-2"></i>
+                                    <span>范围滑块</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="file">
+                                    <i class="fas fa-file-upload mr-2"></i>
+                                    <span>文件上传</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="header">
+                                    <i class="fas fa-heading mr-2"></i>
+                                    <span>标题文本</span>
+                                </button>
+                                <button type="button" class="field-type w-full text-left px-3 py-2 rounded hover:bg-gray-100 flex items-center" data-type="paragraph">
+                                    <i class="fas fa-align-left mr-2"></i>
+                                    <span>段落文本</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 表单构建区域 -->
+                        <div class="flex-1 bg-white rounded-lg shadow p-4">
+                            <div id="form-builder"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 字段逻辑关系 -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4">字段逻辑关系</h3>
+                    <div id="field-logic" class="field-logic-container">
+                        <!-- 逻辑规则将在这里动态添加 -->
+                    </div>
+                    <button type="button" id="add-logic"
+                        class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-plus mr-2"></i>
+                        添加逻辑规则
+                    </button>
+                </div>
+                
+                <!-- 提交按钮 -->
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="window.location.href='{% url 'conference:manage_registration_forms' %}'"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        取消
+                    </button>
+                    <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script src="https://formbuilder.online/assets/js/form-builder.min.js"></script>
+
+<script>
+jQuery(function($) {
+    // 初始化表单构建器
+    var formBuilder = $('#form-builder').formBuilder({
+        disableFields: ['button', 'hidden'],
+        disabledAttrs: ['access'],
+        showActionButtons: false,  // 隐藏操作按钮
+        controlPosition: 'left',
+        typeUserEvents: {
+            text: {
+                onadd: function(fld) {
+                    if (fld.subtype === 'email') {
+                        fld.className = 'form-control';
+                        fld.required = true;
+                    }
+                }
+            }
+        }
+    });
+
+    // 等待表单构建器初始化完成后加载数据
+    $(document).ready(function() {
+        // 隐藏表单构建器自带的字段面板
+        setTimeout(function() {
+            $('.formbuilder-icon-button').hide();
+            $('.cb-wrap').hide();
+        }, 500);
+
+        // 如果有现有的表单字段数据，加载它
+        {% if registration_form.fields_json %}
+        setTimeout(function() {
+            const savedFields = {{ registration_form.fields_json|safe }};
+            console.log('Loading saved fields:', savedFields);
+            formBuilder.actions.setData(savedFields);
+        }, 500);
+        {% endif %}
+
+        // 如果有现有的逻辑规则数据，加载它
+        {% if registration_form.logic_rules_json %}
+        setTimeout(function() {
+            const logicRules = {{ registration_form.logic_rules_json|safe }};
+            console.log('Loading logic rules:', logicRules);
+            
+            // 获取当前表单字段
+            const formData = formBuilder.actions.getData();
+            console.log('Current form fields:', formData);
+
+            // 为每个规则创建UI
+            logicRules.forEach(function(rule) {
+                const ruleHtml = `
+                    <div id="${rule.id}" class="logic-rule">
+                        <div class="flex justify-between items-center mb-3">
+                            <h5 class="font-medium">条件规则</h5>
+                            <button type="button" class="delete-rule text-red-600 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">如果</label>
+                                <select class="condition-field mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">选择字段</option>
+                                    ${formData.map(field => `<option value="${field.name}" ${field.name === rule.condition.field ? 'selected' : ''}>${field.label || field.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">条件</label>
+                                <select class="condition-operator mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="equals" ${rule.condition.operator === 'equals' ? 'selected' : ''}>等于</option>
+                                    <option value="not_equals" ${rule.condition.operator === 'not_equals' ? 'selected' : ''}>不等于</option>
+                                    <option value="contains" ${rule.condition.operator === 'contains' ? 'selected' : ''}>包含</option>
+                                    <option value="not_contains" ${rule.condition.operator === 'not_contains' ? 'selected' : ''}>不包含</option>
+                                    <option value="greater_than" ${rule.condition.operator === 'greater_than' ? 'selected' : ''}>大于</option>
+                                    <option value="less_than" ${rule.condition.operator === 'less_than' ? 'selected' : ''}>小于</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">值</label>
+                                <input type="text" class="condition-value mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="${rule.condition.value || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">则</label>
+                                <select class="action-field mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">选择字段</option>
+                                    ${formData.map(field => `<option value="${field.name}" ${field.name === rule.action.field ? 'selected' : ''}>${field.label || field.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">动作</label>
+                                <select class="action-type mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="show" ${rule.action.type === 'show' ? 'selected' : ''}>显示</option>
+                                    <option value="hide" ${rule.action.type === 'hide' ? 'selected' : ''}>隐藏</option>
+                                    <option value="enable" ${rule.action.type === 'enable' ? 'selected' : ''}>启用</option>
+                                    <option value="disable" ${rule.action.type === 'disable' ? 'selected' : ''}>禁用</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#logic-rules-container').append(ruleHtml);
+                bindRuleEvents(rule.id);
+            });
+        }, 1000);  // 等待字段加载完成后再加载逻辑规则
+        {% endif %}
+    });
+
+    // 字段类型按钮点击事件
+    $('.field-type').on('click', function(e) {
+        e.preventDefault();
+        const fieldType = $(this).data('type');
+        
+        const fieldData = {
+            type: 'text', // 默认使用text类型
+            label: getDefaultLabel(fieldType),
+            className: 'form-control'
+        };
+        
+        // 根据字段类型添加特定配置
+        switch(fieldType) {
+            case 'text':
+                fieldData.subtype = 'text';
+                break;
+            case 'textarea':
+                fieldData.type = 'textarea';
+                break;
+            case 'number':
+                fieldData.type = 'number';
+                fieldData.min = '0';
+                break;
+            case 'date':
+                fieldData.type = 'date';
+                fieldData.placeholder = 'YYYY-MM-DD';
+                break;
+            case 'time':
+                fieldData.type = 'text';
+                fieldData.subtype = 'time';
+                fieldData.placeholder = 'HH:MM';
+                break;
+            case 'datetime-local':
+                fieldData.type = 'text';
+                fieldData.subtype = 'datetime-local';
+                fieldData.placeholder = 'YYYY-MM-DD HH:MM';
+                break;
+            case 'email':
+                fieldData.type = 'text';
+                fieldData.subtype = 'email';
+                fieldData.placeholder = 'example@domain.com';
+                break;
+            case 'tel':
+                fieldData.type = 'text';
+                fieldData.subtype = 'tel';
+                fieldData.placeholder = '请输入电话号码';
+                break;
+            case 'url':
+                fieldData.type = 'text';
+                fieldData.subtype = 'url';
+                fieldData.placeholder = 'https://';
+                break;
+            case 'color':
+                fieldData.type = 'text';
+                fieldData.subtype = 'color';
+                break;
+            case 'range':
+                fieldData.type = 'number';
+                fieldData.subtype = 'range';
+                fieldData.min = '0';
+                fieldData.max = '100';
+                fieldData.step = '1';
+                break;
+            case 'file':
+                fieldData.type = 'file';
+                fieldData.multiple = false;
+                break;
+            case 'select':
+                fieldData.type = 'select';
+                fieldData.values = [
+                    {
+                        label: '选项1',
+                        value: 'option1'
+                    },
+                    {
+                        label: '选项2',
+                        value: 'option2'
+                    }
+                ];
+                break;
+            case 'radio-group':
+                fieldData.type = 'radio-group';
+                fieldData.values = [
+                    {
+                        label: '选项1',
+                        value: 'option1'
+                    },
+                    {
+                        label: '选项2',
+                        value: 'option2'
+                    }
+                ];
+                break;
+            case 'checkbox-group':
+                fieldData.type = 'checkbox-group';
+                fieldData.values = [
+                    {
+                        label: '选项1',
+                        value: 'option1'
+                    },
+                    {
+                        label: '选项2',
+                        value: 'option2'
+                    }
+                ];
+                break;
+            case 'header':
+                fieldData.type = 'header';
+                fieldData.subtype = 'h3';
+                break;
+            case 'paragraph':
+                fieldData.type = 'paragraph';
+                fieldData.subtype = 'p';
+                break;
+        }
+        
+        try {
+            formBuilder.actions.addField(fieldData);
+            console.log('字段添加成功:', fieldType);
+        } catch (error) {
+            console.error('添加字段失败:', error);
+        }
+    });
+
+    // 获取字段默认标签
+    function getDefaultLabel(fieldType) {
+        const labels = {
+            'text': '文本字段',
+            'textarea': '多行文本',
+            'number': '数字字段',
+            'select': '下拉选择',
+            'radio-group': '单选按钮组',
+            'checkbox-group': '复选框组',
+            'date': '日期字段',
+            'time': '时间字段',
+            'datetime-local': '日期时间字段',
+            'email': '电子邮箱',
+            'tel': '电话号码',
+            'url': '网址链接',
+            'color': '颜色选择',
+            'range': '范围滑块',
+            'file': '文件上传',
+            'header': '标题文本',
+            'paragraph': '段落文本'
+        };
+        return labels[fieldType] || '新字段';
+    }
+
+    // 保存表单时的处理
+    $('#registrationForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // 获取表单构建器的数据
+        try {
+            const formBuilderData = formBuilder.actions.getData();
+            console.log('Form builder data:', formBuilderData);  
+            
+            // 将表单构建器的数据转换为JSON字符串
+            formData.append('fields', JSON.stringify(formBuilderData));
+            
+            // 获取并添加逻辑规则数据
+            const logicRules = [];
+            $('.logic-rule').each(function() {
+                const $rule = $(this);
+                const rule = {
+                    id: $rule.attr('id'),
+                    condition: {
+                        field: $rule.find('.condition-field').val(),
+                        operator: $rule.find('.condition-operator').val(),
+                        value: $rule.find('.condition-value').val()
+                    },
+                    action: {
+                        field: $rule.find('.action-field').val(),
+                        type: $rule.find('.action-type').val()
+                    }
+                };
+                logicRules.push(rule);
+            });
+            formData.append('logic_rules', JSON.stringify(logicRules));
+            
+            // 获取关联会议的值
+            const conferenceId = $('#conference').val();
+            if (conferenceId) {
+                formData.append('conference', conferenceId);
+            }
+            
+            // 设置is_formio为false
+            formData.append('is_formio', 'false');
+            
+            // 发送AJAX请求
+            $.ajax({
+                url: window.location.pathname,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response) {
+                    console.log('Response:', response);  
+                    if (response.success) {
+                        showMessage('success', response.message);
+                        if (response.redirect_url) {
+                            setTimeout(function() {
+                                window.location.href = response.redirect_url;
+                            }, 1500);
+                        }
+                    } else {
+                        showMessage('error', response.message || '保存失败，请重试');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', xhr.responseText);  
+                    const response = xhr.responseJSON || {};
+                    showMessage('error', response.message || `保存失败: ${error}`);
+                }
+            });
+        } catch (error) {
+            console.error('Form processing error:', error);  
+            showMessage('error', `处理表单数据时出错: ${error.message}`);
+        }
+    });
+
+    // 显示消息提示
+    function showMessage(type, message) {
+        const alertClass = type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+        const alert = $(`
+            <div class="fixed top-4 right-4 px-4 py-3 rounded-lg ${alertClass} shadow-lg z-50">
+                ${message}
+            </div>
+        `);
+        
+        // 移除之前的消息
+        $('.fixed.top-4.right-4').remove();
+        
+        $('body').append(alert);
+        setTimeout(() => alert.remove(), 5000);  
+    }
+});
+</script>
+{% endblock %}

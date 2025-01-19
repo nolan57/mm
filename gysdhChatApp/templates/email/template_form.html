@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}编辑邮件模板{% else %}创建邮件模板{% endif %} - GYSDH CHAT{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+<style>
+    .dark .note-editor.note-frame {
+        background-color: rgb(55, 65, 81);
+        border-color: rgb(75, 85, 99);
+    }
+    .dark .note-editor.note-frame .note-editing-area .note-editable {
+        background-color: rgb(55, 65, 81);
+        color: white;
+    }
+    .dark .note-editor.note-frame .note-toolbar {
+        background-color: rgb(75, 85, 99);
+        border-color: rgb(107, 114, 128);
+    }
+    .dark .note-editor.note-frame .note-toolbar .note-btn {
+        background-color: rgb(75, 85, 99);
+        border-color: rgb(107, 114, 128);
+        color: white;
+    }
+    .dark .note-editor.note-frame .note-toolbar .note-btn:hover {
+        background-color: rgb(55, 65, 81);
+    }
+    .dark .note-editor.note-frame .note-statusbar {
+        background-color: rgb(75, 85, 99);
+        border-color: rgb(107, 114, 128);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+        <!-- 标题区域 -->
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600">
+            <h2 class="text-2xl font-bold text-white text-center">
+                {% if form.instance.pk %}编辑邮件模板{% else %}创建邮件模板{% endif %}
+            </h2>
+        </div>
+
+        <!-- 表单区域 -->
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- 模板名称 -->
+                <div>
+                    <label for="id_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        模板名称
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.name.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 邮件主题 -->
+                <div>
+                    <label for="id_subject" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        邮件主题
+                    </label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.subject.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 邮件内容 -->
+                <div>
+                    <label for="id_content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        邮件内容
+                    </label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.content.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 模板描述 -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        模板描述
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.description.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 可用变量 -->
+                <div>
+                    <label for="id_variables" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        可用变量
+                    </label>
+                    {{ form.variables }}
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        以JSON格式存储可用于此模板的变量名及其描述，例如：{"user_name": "用户名", "company": "公司名称"}
+                    </p>
+                    {% if form.variables.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.variables.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'template_list' %}"
+                       class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        取消
+                    </a>
+                    <button type="submit"
+                            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 dark:hover:from-blue-700 dark:hover:to-indigo-700 transition-colors duration-200">
+                        {% if form.instance.pk %}更新模板{% else %}创建模板{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Summernote -->
+{{ form.media.js }}
+{% endblock %}

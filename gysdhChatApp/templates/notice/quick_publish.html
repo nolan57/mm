@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}发布注意事项 - GYSDH CHAT{% endblock %}
+
+{% block extra_css %}
+<!-- Summernote 样式 -->
+{{ form.media.css }}
+<style>
+    .note-editor {
+        width: 100%;
+    }
+    .note-editor.note-frame {
+        border-color: rgb(209, 213, 219);
+    }
+    .dark .note-editor.note-frame {
+        border-color: rgb(75, 85, 99);
+    }
+    .dark .note-editor.note-frame .note-editing-area {
+        background-color: rgb(55, 65, 81);
+    }
+    .dark .note-editor.note-frame .note-editing-area .note-editable {
+        background-color: rgb(55, 65, 81);
+        color: white;
+    }
+    .dark .note-toolbar {
+        background-color: rgb(75, 85, 99);
+    }
+    .dark .note-btn {
+        background-color: rgb(75, 85, 99);
+        color: white;
+        border-color: rgb(107, 114, 128);
+    }
+    .dark .note-btn:hover {
+        background-color: rgb(85, 95, 109);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+        <!-- 标题区域 -->
+        <div class="px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 dark:from-yellow-600 dark:to-orange-600">
+            <h2 class="text-2xl font-bold text-white text-center">发布注意事项</h2>
+        </div>
+
+        <!-- 表单区域 -->
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- 内容输入框 -->
+                <div>
+                    <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        注意事项内容
+                    </label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                    <div class="mt-2 text-sm text-red-600">
+                        {{ form.content.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'conference:dashboard' %}"
+                       class="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                        取消
+                    </a>
+                    <button type="submit"
+                            class="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 dark:from-yellow-600 dark:to-orange-600 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 dark:hover:from-yellow-700 dark:hover:to-orange-700 transition-colors duration-200">
+                        发布注意事项
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Summernote -->
+{{ form.media.js }}
+{% endblock %}
